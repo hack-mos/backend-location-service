@@ -18,6 +18,12 @@
 - Доступ к Keycloak можно получить по `http://localhost:8543/admin/master/console/`
 
 **Примечания:**
+
+**OpenAPI**:
+
+- [Route Service OpenAPI](https://github.com/hack-mos/backend-route-service/blob/master/src/main/resources/route-service-openapi.yaml)
+- [Location Service OpenAPI](https://github.com/hack-mos/backend-location-service/blob/master/src/main/resources/location-service-openapi.yaml)
+
 В Keycloak заведены три пользователя (далее - логин/пароль):
 
 1. boss/boss (права Администратора)
