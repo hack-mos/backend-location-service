@@ -1,0 +1,605 @@
+---
+openapi: 3.1.0
+components:
+  schemas:
+    LocalDateTime:
+      type: string
+      format: date-time
+      examples:
+        - 2022-03-10T12:15:50
+    LocalTime:
+      type: string
+      format: local-time
+      examples:
+        - 13:45:30.123456789
+      externalDocs:
+        description: As defined by 'partial-time' in RFC3339
+        url: https://www.rfc-editor.org/rfc/rfc3339.html#section-5.6
+    TaxiRequestDto:
+      type: object
+      required:
+        - name
+        - capacity
+      properties:
+        minutesToCharge:
+          type: integer
+          exclusiveMinimum: 0
+          format: int32
+        driver:
+          type: string
+        name:
+          type: string
+          pattern: \S
+        id:
+          type: integer
+          format: int64
+        battery:
+          type: integer
+          exclusiveMinimum: 0
+          format: int32
+        capacity:
+          type: integer
+          exclusiveMinimum: 0
+          format: int32
+    PlaceRequestDto:
+      type: object
+      required:
+        - name
+        - address
+        - river
+        - latitude
+        - longitude
+      properties:
+        address:
+          type: string
+          pattern: \S
+        latitude:
+          type: number
+        placeId:
+          type: integer
+          format: int32
+        name:
+          type: string
+          pattern: \S
+        river:
+          type: string
+          pattern: \S
+        longitude:
+          type: number
+    LocalDate:
+      type: string
+      format: date
+      examples:
+        - 2022-03-10
+    MinTimePlace:
+      type: object
+      properties:
+        toDock:
+          type: integer
+          format: int64
+        toUsageCount:
+          type: integer
+          format: int64
+        fromDock:
+          type: integer
+          format: int64
+        minutes:
+          type: number
+          format: double
+        fromUsageCount:
+          type: integer
+          format: int64
+        toBerthPosition:
+          type: string
+        fromBerthPosition:
+          type: string
+    ScheduleRequestDto:
+      type: object
+      properties:
+        changeType:
+          type: string
+        placeId:
+          type: integer
+          format: int32
+        shipName:
+          type: string
+        endDateUtc:
+          $ref: "#/components/schemas/LocalDateTime"
+        dockingDuration:
+          type: integer
+          format: int32
+        routeName:
+          type: string
+        canceledShipName:
+          type: string
+        scheduleEndDate:
+          $ref: "#/components/schemas/LocalDate"
+        scheduleStartDate:
+          $ref: "#/components/schemas/LocalDate"
+        startDateUtc:
+          $ref: "#/components/schemas/LocalDateTime"
+        berthPosition:
+          type: string
+        dockingArrival:
+          $ref: "#/components/schemas/LocalTime"
+        departure:
+          $ref: "#/components/schemas/LocalTime"
+        departureTimeMinutes:
+          type: integer
+          format: int32
+        dockName:
+          type: string
+        arrivalTimeMinutes:
+          type: integer
+          format: int32
+  securitySchemes:
+    SecurityScheme:
+      type: openIdConnect
+      openIdConnectUrl: http://host.docker.internal:8543/realms/master/.well-known/openid-configuration
+      description: Authentication
+paths:
+  /api/v1/place:
+    get:
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlaceRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get All Places
+      tags:
+        - Place Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+            - HACK_CLIENT
+            - HACK_DRIVER
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Create Place
+      tags:
+        - Place Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+            - HACK_CLIENT
+            - HACK_DRIVER
+  /api/v1/place/{id}:
+    put:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Update Place By Id
+      tags:
+        - Place Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+            - HACK_CLIENT
+            - HACK_DRIVER
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get Place By Id
+      tags:
+        - Place Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+            - HACK_CLIENT
+            - HACK_DRIVER
+    delete:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Delete Place By Id
+      tags:
+        - Place Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+            - HACK_CLIENT
+            - HACK_DRIVER
+  /api/v1/schedules:
+    get:
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduleRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get All Schedules
+      tags:
+        - Schedule Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Create Schedule
+      tags:
+        - Schedule Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+  /api/v1/schedules/{id}:
+    put:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Update Schedule By Id
+      tags:
+        - Schedule Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get Schedule By Id
+      tags:
+        - Schedule Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+    delete:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Delete Schedule By Id
+      tags:
+        - Schedule Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+  /api/v1/taxi:
+    get:
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaxiRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get All Taxis
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaxiRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxiRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Create Taxi
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_DRIVER
+            - HACK_ADMIN
+  /api/v1/taxi/min:
+    get:
+      parameters:
+        - name: fromDock
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: toDock
+          in: query
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MinTimePlace"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get Min Time For Places
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+  /api/v1/taxi/{id}:
+    put:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaxiRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxiRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Update Taxi By Id
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_DRIVER
+            - HACK_ADMIN
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxiRequestDto"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Get Taxi By Id
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+    delete:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Delete Taxi By Id
+      tags:
+        - Taxi Resource
+      security:
+        - SecurityScheme:
+            - HACK_ADMIN
+info:
+  title: location-service API
+  version: 1.0-SNAPSHOT
